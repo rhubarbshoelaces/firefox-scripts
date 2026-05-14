@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="context-fill" fill-opacity="context-fill-opacity">
+  <defs>
+    <style>
+      .st0 {
+        isolation: isolate;
+        opacity: .9;
+      }
+    </style>
+  </defs>
+  <rect class="st0" x="7.2" y="7.5" width="1.1" height="1.5"/>
+  <rect class="st0" x="9.4" y="7.5" width="1.1" height="1.5"/>
+  <rect class="st0" x="13.9" y="7.5" width="1.1" height="1.5"/>
+  <rect class="st0" x="11.7" y="7.5" width="1.1" height="1.5"/>
+  <g>
+    <path class="st0" d="M3.9,9v-1.5h-.3L7.8,3.3l-1.1-1.1L1.2,7.7c-.3.3-.3.8,0,1.1l5.5,5.5,1.1-1.1-4.2-4.2h.3Z"/>
+    <rect class="st0" x="5" y="7.5" width="1.1" height="1.5"/>
+  </g>
+</svg>
+
