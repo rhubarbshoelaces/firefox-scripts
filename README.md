@@ -21,7 +21,8 @@ Follow the installation instructions on that repository to prep your browser bef
 ## The Scripts
 
 ### Custom Buttons (`ButtonFactory.uc.js`)
-These scripts require the ButtonFactory.uc.js to run, but are highly customizable and intended to replace toolbar buttons created with the extension [Custom Buttons](https://sourceforge.net/projects/custombuttons/) using simple JSON formatting. The "search" type buttons will perform a search using text from either Firefox's search bar, URL bar, or highlighted text on the page. I've uploaded several examples to demonstrate formatting and possibilities.
+These scripts require the ButtonFactory.uc.js to run, but are highly customizable and intended to replace toolbar buttons created with the extension [Custom Buttons](https://sourceforge.net/projects/custombuttons/) using simple JSON formatting. The "search" type buttons will perform a search using text from either Firefox's search bar, URL bar, or highlighted text on the page. I've uploaded several examples to demonstrate formatting and possibilities, but I fill the dropdown menus with useful secondary functions like an RSS feed from the website or a more specific search. Here's what longclicking my Google Maps button looks like, which matches what longpressing the Google Maps app on my Android phone offers:
+<img width="514" height="219" alt="Image" src="https://github.com/user-attachments/assets/2fd0787a-e57b-4d75-9a6b-7ecf11de245e" />
 
 ### Close & Unclose Navigation (`Navigation_CloseUnclose.uc`)
 Modifies the native Back and Forward buttons. When there is no history to go back to, the Back button becomes a "Close Tab" button. When there is no forward history, the Forward button becomes a "Reopen Closed Tab" dropdown.
