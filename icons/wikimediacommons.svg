@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 1376 1376">
+  <defs>
+    <style>
+      .st0, .st1 {
+        fill: none;
+      }
+
+      .st2 {
+        fill: #900;
+      }
+
+      .st3 {
+        clip-path: url(#clippath-1);
+      }
+
+      .st4 {
+        clip-path: url(#clippath-3);
+      }
+
+      .st5 {
+        clip-path: url(#clippath-4);
+      }
+
+      .st6 {
+        clip-path: url(#clippath-2);
+      }
+
+      .st7 {
+        clip-path: url(#clippath-6);
+      }
+
+      .st8 {
+        clip-path: url(#clippath-5);
+      }
+
+      .st1 {
+        stroke: #069;
+        stroke-miterlimit: 6.712;
+        stroke-width: 140.956px;
+      }
+
+      .st9 {
+        fill: #069;
+      }
+
+      .st10 {
+        clip-path: url(#clippath);
+      }
+    </style>
+    <clipPath id="clippath">
+      <circle class="st0" cx="688" cy="865.873" r="500.059"/>
+    </clipPath>
+    <clipPath id="clippath-1">
+      <circle class="st0" cx="688" cy="865.873" r="500.058"/>
+    </clipPath>
+    <clipPath id="clippath-2">
+      <circle class="st0" cx="688" cy="865.873" r="500.059"/>
+    </clipPath>
+    <clipPath id="clippath-3">
+      <circle class="st0" cx="688" cy="865.873" r="500.058"/>
+    </clipPath>
+    <clipPath id="clippath-4">
+      <circle class="st0" cx="688" cy="865.873" r="500.058"/>
+    </clipPath>
+    <clipPath id="clippath-5">
+      <circle class="st0" cx="688" cy="865.873" r="500.059"/>
+    </clipPath>
+    <clipPath id="clippath-6">
+      <circle class="st0" cx="688" cy="865.873" r="500.058"/>
+    </clipPath>
+  </defs>
+  <circle class="st2" cx="688" cy="865.873" r="167.805"/>
+  <g>
+    <g class="st10">
+      <g id="arrow">
+        <path class="st9" d="M669.541,1167.922v198.01h36.917v-198.01"/>
+        <path class="st9" d="M615.844,1176.312l72.156-125.854,72.156,125.854"/>
+      </g>
+    </g>
+    <g id="arrows3">
+      <g class="st3">
+        <g id="arrow1" data-name="arrow">
+          <path class="st9" d="M461.367,1066.402l-140.014,140.014,26.104,26.104,140.014-140.014"/>
+          <path class="st9" d="M417.464,1034.365l140.014-37.97-37.97,140.014"/>
+        </g>
+      </g>
+      <g class="st6">
+        <g id="arrow2" data-name="arrow">
+          <path class="st9" d="M385.951,847.415h-198.01v36.917h198.01"/>
+          <path class="st9" d="M377.561,793.717l125.854,72.156-125.854,72.156"/>
+        </g>
+      </g>
+      <g class="st4">
+        <g id="arrow3" data-name="arrow">
+          <path class="st9" d="M487.471,639.24l-140.014-140.014-26.104,26.104,140.014,140.014"/>
+          <path class="st9" d="M519.509,595.338l37.97,140.014-140.014-37.97"/>
+        </g>
+      </g>
+    </g>
+    <g id="arrows31" data-name="arrows3">
+      <g class="st5">
+        <g id="arrow4" data-name="arrow">
+          <path class="st9" d="M914.633,1066.402l140.014,140.014-26.104,26.104-140.014-140.014"/>
+          <path class="st9" d="M958.536,1034.365l-140.014-37.97,37.97,140.014"/>
+        </g>
+      </g>
+      <g class="st8">
+        <g id="arrow5" data-name="arrow">
+          <path class="st9" d="M990.049,847.415h198.01v36.917h-198.01"/>
+          <path class="st9" d="M998.439,793.717l-125.854,72.156,125.854,72.156"/>
+        </g>
+      </g>
+      <g class="st7">
+        <g id="arrow6" data-name="arrow">
+          <path class="st9" d="M888.529,639.24l140.014-140.014,26.104,26.104-140.014,140.014"/>
+          <path class="st9" d="M856.491,595.338l-37.97,140.014,140.014-37.97"/>
+        </g>
+      </g>
+    </g>
+    <path id="blue_path" class="st1" d="M384.241,562.114c-167.762,167.762-167.762,439.757,0,607.518s439.757,167.762,607.518,0,167.762-439.757,0-607.518c-118.656-118.656-297.826-58.141-333.423-319.185"/>
+    <path id="arrow_top" class="st9" d="M649.405,1.678s-60.41,226.537-134.244,310.439,194.654-104.039,285.268-8.39S649.405,1.678,649.405,1.678Z"/>
+  </g>
+</svg>
