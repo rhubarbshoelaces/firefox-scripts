@@ -22,7 +22,7 @@ Follow the installation instructions on that repository to prep your browser bef
 
 ### Custom Buttons (`ButtonFactory.uc.js`)
 These scripts require the ButtonFactory.uc.js to run, but are highly customizable and intended to replace toolbar buttons created with the extension [Custom Buttons](https://sourceforge.net/projects/custombuttons/) using simple JSON formatting. The "search" type buttons will perform a search using text from either Firefox's search bar, URL bar, or highlighted text on the page. I've uploaded several examples to demonstrate formatting and possibilities, but I fill the dropdown menus with useful secondary functions like an RSS feed from the website or a more specific search. Here's what longclicking my Google Maps button looks like, which matches what longpressing the Google Maps app on my Android phone offers:
-<img width="514" height="219" alt="Image" src="https://github.com/user-attachments/assets/2fd0787a-e57b-4d75-9a6b-7ecf11de245e" />
+<img width="514" height="219" alt="Custom Button Google Maps" src="https://github.com/user-attachments/assets/2fd0787a-e57b-4d75-9a6b-7ecf11de245e" />
 
 ### Close & Unclose Navigation (`Navigation_CloseUnclose.uc`)
 Modifies the native Back and Forward buttons. When there is no history to go back to, the Back button becomes a "Close Tab" button. When there is no forward history, the Forward button becomes a "Reopen Closed Tab" dropdown.
@@ -30,12 +30,16 @@ Modifies the native Back and Forward buttons. When there is no history to go bac
 ### Reload Plus (`Navigation_ReloadPlus.uc.js`)
 Adds a dropdown menu with "Bypass Cache" (like Shift+Reload) as well as reload after Firefox performs "Clear Cookies" on the site or "Clear Local Storage" on the site.
 
+<img width="181" height="129" alt="Reload Dropdown" src="https://github.com/user-attachments/assets/53cf75f7-7640-48b4-b387-96773cf95a8a" />
+
 ### Back Track (`Navigation_BackTrack.uc.js`)
 Working with the Close & Unclose Navigation, this tells Firefox to switch back to a parent tab when a child tab is closed, and adds parent tab information to the back menu.
 
-### Windows Context Menus for Mac (`Windows-StyleContextMenu_macOS-Only.uc.js`)
+### Windows Context Menu Navigation for Mac (`Windows-StyleContextMenu_macOS-Only.uc.js`)
 *macOS Only*
 Horizontal Back/Forward/Reload icon row at the top of the right-click context menu for macOS, bringing it in line with the Windows 11 Firefox experience and built to work in concert with the Close & Unclose script.
+
+<img width="243" height="154" alt="macOS Context Menu navigtion" src="https://github.com/user-attachments/assets/d689242c-ef8a-498c-85a8-7b0038089ca7" />
 
 ### UserChromeJS Folder Organizer (`UserChromeJS_Folder_Orgainizer`)
 Sorts scripts in the UserChromeJS menu into subfolders based on their name, with any text before a colon becoming the subfolder name.
