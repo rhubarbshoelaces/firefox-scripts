@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           Navigation: Close & Unclose
-// @description    Back to Close, Forward to Unclose. Cleanly combined with hardcoded tooltips.
+// @description    Back to Close, Forward to Unclose
 // @author         rhubarbshoelaces
 // @homepageURL    https://github.com/rhubarbshoelaces/firefox-scripts/
 // @include        main
@@ -9,254 +9,355 @@
 (function() {
   if (location != "chrome://browser/content/browser.xhtml") return;
 
-  let backCmd = document.getElementById("Browser:Back");
-  let fwdCmd = document.getElementById("Browser:Forward");
-  let backBtn = document.getElementById("back-button");
-  let fwdBtn = document.getElementById("forward-button");
-  let contextBack = document.getElementById("context-back");
-  let contextFwd = document.getElementById("context-forward");
-  let contextMenu = document.getElementById("contentAreaContextMenu");
+  function init() {
+      const SessionStore = window.SessionStore || 
+          ChromeUtils.importESModule("resource:///modules/sessionstore/SessionStore.sys.mjs").SessionStore;
 
-  function closeTab() { document.getElementById("cmd_close")?.doCommand(); }
-  function undoCloseTab() { document.getElementById("History:UndoCloseTab")?.doCommand(); }
-  function stopEvent(e) { e.preventDefault(); e.stopImmediatePropagation(); }
+      let backCmd = document.getElementById("Browser:Back");
+      let fwdCmd = document.getElementById("Browser:Forward");
+      let backBtn = document.getElementById("back-button");
+      let fwdBtn = document.getElementById("forward-button");
+      let contextBack = document.getElementById("context-back");
+      let contextFwd = document.getElementById("context-forward");
+      let contextMenu = document.getElementById("contentAreaContextMenu");
+      let bFMenu = document.getElementById("backForwardMenu");
 
-  if (backCmd) {
-      backCmd.addEventListener("command", function(e) {
-          if (!gBrowser.canGoBack) { stopEvent(e); closeTab(); }
-      }, true);
-  }
-  
-  if (fwdCmd) {
-      fwdCmd.addEventListener("command", function(e) {
-          if (!gBrowser.canGoForward) { stopEvent(e); undoCloseTab(); }
-      }, true);
-  }
+      let activeUncloseBtn = null;
 
-  function updateUIState() {
-      let noBack = !gBrowser.canGoBack;
-      let noFwd = !gBrowser.canGoForward;
-      
-      let modifier = AppConstants.platform === "macosx" ? "Cmd" : "Alt";
-      let nativeBackTip = `Go back one page (${modifier}+Left Arrow)`;
-      let nativeFwdTip = `Go forward one page (${modifier}+Right Arrow)`;
+      function closeTab() { document.getElementById("cmd_close")?.doCommand(); }
+      function undoCloseTabAction() { document.getElementById("History:UndoCloseTab")?.doCommand(); }
+      function stopEvent(e) { e.preventDefault(); e.stopImmediatePropagation(); }
 
-      if (backCmd && backBtn) {
-          backBtn.removeAttribute("data-l10n-id");
-          if (noBack) {
-              backCmd.removeAttribute("disabled");
-              backBtn.removeAttribute("disabled");
-              backBtn.setAttribute("back-to-close", "true");
-              backBtn.setAttribute("tooltiptext", "Close current tab (Ctrl+W)");
-          } else {
-              backBtn.removeAttribute("back-to-close");
-              backBtn.setAttribute("tooltiptext", nativeBackTip);
+      function getClosedTabsData() {
+          try {
+              let data;
+              try {
+                  data = SessionStore.getClosedTabData({ sourceWindow: window });
+              } catch (e) {
+                  data = SessionStore.getClosedTabData(window);
+              }
+              if (typeof data === "string") {
+                  try { data = JSON.parse(data); } catch (e) { return []; }
+              }
+              return Array.isArray(data) ? data : [];
+          } catch (err) {
+              return [];
           }
       }
 
-      if (contextBack) {
-          contextBack.removeAttribute("data-l10n-id");
-          if (noBack) {
-              contextBack.removeAttribute("disabled");
-              contextBack.setAttribute("back-to-close", "true");
-              contextBack.setAttribute("image", "chrome://userchromejs/content/icons/dashedback.svg");
-              contextBack.setAttribute("label", "Close Tab");
-              contextBack.setAttribute("tooltiptext", "Close current tab (Ctrl+W)");
-          } else {
-              contextBack.removeAttribute("back-to-close");
-              contextBack.removeAttribute("image");               
-              contextBack.setAttribute("label", "Back");
-              contextBack.setAttribute("tooltiptext", nativeBackTip);
+      function restoreClosedTabAt(tabData, index) {
+          if (contextMenu && !contextMenu.hidden) contextMenu.hidePopup();
+          if (tabData && tabData.closedId !== undefined && typeof SessionStore.undoCloseTabById === "function") {
+              try {
+                  return SessionStore.undoCloseTabById(tabData.closedId);
+              } catch (e) {}
+          }
+          try {
+              return SessionStore.undoCloseTab(window, index);
+          } catch (e) {
+              try {
+                  return SessionStore.undoCloseTab({ sourceWindow: window, index: index });
+              } catch (err) {}
           }
       }
 
-      if (fwdCmd && fwdBtn) {
-          fwdBtn.removeAttribute("data-l10n-id");
-          if (noFwd) {
-              fwdCmd.removeAttribute("disabled");
-              fwdBtn.removeAttribute("disabled");
-              fwdBtn.setAttribute("forward-to-unclose", "true");
-              fwdBtn.setAttribute("tooltiptext", "Reopen closed tab (Ctrl+Shift+T)");
-              fwdBtn.removeAttribute("context");
-          } else {
-              fwdBtn.removeAttribute("forward-to-unclose");
-              fwdBtn.setAttribute("tooltiptext", nativeFwdTip);
-              fwdBtn.setAttribute("context", "backForwardMenu");
-          }
-      }
-
-      if (contextFwd) {
-          contextFwd.removeAttribute("data-l10n-id");
-          if (noFwd) {
-              contextFwd.removeAttribute("disabled");
-              contextFwd.setAttribute("forward-to-unclose", "true");
-              contextFwd.setAttribute("image", "chrome://userchromejs/content/icons/dashedforward.svg");
-              contextFwd.setAttribute("label", "Reopen Closed Tab");
-              contextFwd.setAttribute("tooltiptext", "Reopen closed tab (Ctrl+Shift+T)");
-          } else {
-              contextFwd.removeAttribute("forward-to-unclose");
-              contextFwd.removeAttribute("image");               
-              contextFwd.setAttribute("label", "Forward");
-              contextFwd.setAttribute("tooltiptext", nativeFwdTip);
-          }
-      }
-  }
-
-  function getOrCreateUndoMenu() {
-      let popup = document.getElementById("uc-custom-undo-popup");
-      if (popup) return popup;
-
-      popup = document.createXULElement("menupopup");
-      popup.id = "uc-custom-undo-popup";
-      document.getElementById("mainPopupSet").appendChild(popup);
-
-      popup.addEventListener("popupshowing", function() {
-          while (popup.firstChild) popup.firstChild.remove();
-          let closedTabs = SessionStore.getClosedTabData(window);
-          
-          if (closedTabs.length === 0) {
-              let empty = document.createXULElement("menuitem");
-              empty.setAttribute("label", "No recently closed tabs");
-              empty.setAttribute("disabled", "true");
-              popup.appendChild(empty);
-              return;
-          }
-
-          for (let i = 0; i < Math.min(closedTabs.length, 15); i++) {
-              let tabData = closedTabs[i];
-              let item = document.createXULElement("menuitem");
-              item.setAttribute("label", tabData.title);
-              item.setAttribute("image", tabData.image || "chrome://global/skin/icons/defaultFavicon.svg");
-              item.setAttribute("class", "menuitem-iconic"); 
-              
-              item.addEventListener("command", () => SessionStore.undoCloseTab(window, i));
-              popup.appendChild(item);
-          }
-      });
-      return popup;
-  }
-
-  if (backBtn) {
-      backBtn.addEventListener("click", function(e) {
-          if (e.button === 0 && !gBrowser.canGoBack) { stopEvent(e); closeTab(); }
-      }, true); 
-  }
-
-  if (contextMenu) {
-      contextMenu.addEventListener("click", function(e) {
-          let target = e.target.closest("#context-back");
-          if (target && !gBrowser.canGoBack) {
-              stopEvent(e);
-              contextMenu.hidePopup();
-              closeTab();
-          }
-      }, true); 
-  }
-
-  function attachUncloseLogic(btn) {
-      if (!btn) return;
-      let pressTimer;
-      let isLongPress = false;
-
-      btn.addEventListener("mousedown", (e) => {
-          if (e.button !== 0 || gBrowser.canGoForward) return; 
-          stopEvent(e);
-          isLongPress = false;
-
-          pressTimer = setTimeout(() => {
-              isLongPress = true;
-              getOrCreateUndoMenu().openPopup(btn, "after_start", 0, 0, false, false);
-          }, 400); 
-      }, true); 
-
-      btn.addEventListener("mouseup", (e) => {
-          if (e.button !== 0 || gBrowser.canGoForward) return;
-          clearTimeout(pressTimer);
-          stopEvent(e);
-
-          if (!isLongPress) {
-              if (btn.id === "context-forward" && contextMenu) contextMenu.hidePopup();
-              undoCloseTab();
-          }
-      }, true);
-
-      btn.addEventListener("mouseleave", () => clearTimeout(pressTimer));
-
-      ["click", "command", "contextmenu"].forEach(type => {
-          btn.addEventListener(type, (e) => {
-              if (!gBrowser.canGoForward) stopEvent(e);
+      if (backCmd) {
+          backCmd.addEventListener("command", function(e) {
+              if (!gBrowser.canGoBack) { stopEvent(e); closeTab(); }
           }, true);
-      });
-  }
+      }
+      
+      if (fwdCmd) {
+          fwdCmd.addEventListener("command", function(e) {
+              if (!gBrowser.canGoForward) { stopEvent(e); undoCloseTabAction(); }
+          }, true);
+      }
 
-  attachUncloseLogic(fwdBtn);
-  attachUncloseLogic(contextFwd);
+      function updateUIState() {
+          let noBack = !gBrowser.canGoBack;
+          let noFwd = !gBrowser.canGoForward;
+          
+          let modifier = AppConstants.platform === "macosx" ? "Cmd" : "Alt";
+          let nativeBackTip = `Go back one page (${modifier}+Left Arrow)`;
+          let nativeFwdTip = `Go forward one page (${modifier}+Right Arrow)`;
 
-  function forceEnable(element, checkFn) {
-      if (!element) return;
-      new MutationObserver((mutations) => {
-          for (let m of mutations) {
-              if (m.attributeName === "disabled" && element.hasAttribute("disabled") && checkFn()) {
-                  updateUIState();
+          if (backCmd && backBtn) {
+              backBtn.removeAttribute("data-l10n-id");
+              if (noBack) {
+                  backCmd.removeAttribute("disabled");
+                  backBtn.removeAttribute("disabled");
+                  backBtn.setAttribute("back-to-close", "true");
+                  backBtn.setAttribute("tooltiptext", "Close current tab (Ctrl+W)");
+              } else {
+                  backBtn.removeAttribute("back-to-close");
+                  backBtn.setAttribute("tooltiptext", nativeBackTip);
               }
           }
-      }).observe(element, { attributes: true, attributeFilter: ["disabled"] });
-  }
 
-  forceEnable(backCmd, () => !gBrowser.canGoBack);
-  forceEnable(contextBack, () => !gBrowser.canGoBack);
-  forceEnable(fwdCmd, () => !gBrowser.canGoForward);
-  forceEnable(contextFwd, () => !gBrowser.canGoForward);
+          if (contextBack) {
+              contextBack.removeAttribute("data-l10n-id");
+              if (noBack) {
+                  contextBack.removeAttribute("disabled");
+                  contextBack.setAttribute("back-to-close", "true");
+                  contextBack.setAttribute("image", "chrome://userchromejs/content/icons/dashedback.svg");
+                  contextBack.setAttribute("label", "Close Tab");
+                  contextBack.setAttribute("tooltiptext", "Close current tab (Ctrl+W)");
+              } else {
+                  contextBack.removeAttribute("back-to-close");
+                  contextBack.removeAttribute("image");                
+                  contextBack.setAttribute("label", "Back");
+                  contextBack.setAttribute("tooltiptext", nativeBackTip);
+              }
+          }
 
-  gBrowser.addTabsProgressListener({
-      onLocationChange: (aBrowser) => { if (aBrowser === gBrowser.selectedBrowser) updateUIState(); },
-      onStateChange: (aBrowser) => { if (aBrowser === gBrowser.selectedBrowser) updateUIState(); }
-  });
-  window.addEventListener("TabSelect", updateUIState);
-  window.addEventListener("SSTabRestored", updateUIState);
+          if (fwdCmd && fwdBtn) {
+              fwdBtn.removeAttribute("data-l10n-id");
+              if (noFwd) {
+                  fwdCmd.removeAttribute("disabled");
+                  fwdBtn.removeAttribute("disabled");
+                  fwdBtn.setAttribute("forward-to-unclose", "true");
+                  fwdBtn.setAttribute("tooltiptext", "Reopen closed tab (Ctrl+Shift+T)");
+                  fwdBtn.removeAttribute("context");
+              } else {
+                  fwdBtn.removeAttribute("forward-to-unclose");
+                  fwdBtn.setAttribute("tooltiptext", nativeFwdTip);
+                  fwdBtn.setAttribute("context", "backForwardMenu");
+              }
+          }
 
-  if (contextMenu) {
-      contextMenu.addEventListener("popupshowing", () => requestAnimationFrame(updateUIState));
-  }
+          if (contextFwd) {
+              contextFwd.removeAttribute("data-l10n-id");
+              if (noFwd) {
+                  contextFwd.removeAttribute("disabled");
+                  contextFwd.setAttribute("forward-to-unclose", "true");
+                  contextFwd.setAttribute("image", "chrome://userchromejs/content/icons/dashedforward.svg");
+                  contextFwd.setAttribute("label", "Reopen Closed Tab");
+                  contextFwd.setAttribute("tooltiptext", "Reopen closed tab (Ctrl+Shift+T)");
+                  contextFwd.removeAttribute("context");
+              } else {
+                  contextFwd.removeAttribute("forward-to-unclose");
+                  contextFwd.removeAttribute("image");                
+                  contextFwd.setAttribute("label", "Forward");
+                  contextFwd.setAttribute("tooltiptext", nativeFwdTip);
+                  contextFwd.removeAttribute("context");
+              }
+          }
+      }
 
-  updateUIState();
+      function getOrCreateUndoMenu() {
+          let popup = document.getElementById("uc-custom-undo-popup");
+          if (popup) return popup;
 
-  window.addEventListener("mouseup", function(e) {
-      if (e.button === 3 && !gBrowser.canGoBack) { stopEvent(e); closeTab(); }
-      if (e.button === 4 && !gBrowser.canGoForward) { stopEvent(e); undoCloseTab(); }
-  }, true);
+          popup = document.createXULElement("menupopup");
+          popup.id = "uc-custom-undo-popup";
+          document.getElementById("mainPopupSet").appendChild(popup);
 
-  window.addEventListener("keydown", function(e) {
-      let noBack = !gBrowser.canGoBack;
-      let noFwd = !gBrowser.canGoForward;
-      if (!noBack && !noFwd) return;
+          popup.addEventListener("popuphidden", () => {
+              activeUncloseBtn = null;
+          });
 
-      let isBackKey = false, isFwdKey = false;
-      
-      if (e.key === "Backspace") {
-          try {
-              if (Services.prefs.getIntPref("browser.backspace_action", 2) === 0) {
-                  let tag = e.originalTarget.tagName;
-                  if (tag !== "INPUT" && tag !== "TEXTAREA" && !e.originalTarget.isContentEditable) {
-                      if (e.shiftKey) isFwdKey = true; else isBackKey = true;
+          popup.addEventListener("popupshowing", function() {
+              while (popup.firstChild) popup.firstChild.remove();
+              let closedTabs = getClosedTabsData();
+              
+              if (closedTabs.length === 0) {
+                  let empty = document.createXULElement("menuitem");
+                  empty.setAttribute("label", "No recently closed tabs");
+                  empty.setAttribute("disabled", "true");
+                  popup.appendChild(empty);
+                  return;
+              }
+
+              for (let i = 0; i < Math.min(closedTabs.length, 15); i++) {
+                  let tabData = closedTabs[i];
+                  let item = document.createXULElement("menuitem");
+                  item.setAttribute("label", tabData.title || tabData.label || "(Untitled Tab)");
+                  item.setAttribute("image", tabData.image || tabData.iconURI || "chrome://global/skin/icons/defaultFavicon.svg");
+                  item.setAttribute("class", "menuitem-iconic"); 
+                  
+                  let entryData = tabData;
+                  let entryIdx = i;
+                  item.addEventListener("command", function(e) {
+                      stopEvent(e);
+                      restoreClosedTabAt(entryData, entryIdx);
+                  });
+                  popup.appendChild(item);
+              }
+          });
+          return popup;
+      }
+
+      if (bFMenu && !bFMenu._ucPatched) {
+          bFMenu._ucPatched = true;
+          let origOpenPopup = bFMenu.openPopup;
+          bFMenu.openPopup = function(anchor, ...args) {
+              if (!gBrowser.canGoForward && (anchor === fwdBtn || anchor === contextFwd || activeUncloseBtn === fwdBtn || activeUncloseBtn === contextFwd)) {
+                  return;
+              }
+              return origOpenPopup.apply(this, [anchor, ...args]);
+          };
+
+          bFMenu.addEventListener("popupshowing", function(e) {
+              if (!gBrowser.canGoForward && (activeUncloseBtn || fwdBtn?.matches(":hover, :active") || contextFwd?.matches(":hover, :active"))) {
+                  stopEvent(e);
+              }
+          }, true);
+      }
+
+      if (backBtn) {
+          backBtn.addEventListener("click", function(e) {
+              if (e.button === 0 && !gBrowser.canGoBack) { stopEvent(e); closeTab(); }
+          }, true); 
+      }
+
+      if (contextMenu) {
+          contextMenu.addEventListener("click", function(e) {
+              let target = e.target.closest("#context-back");
+              if (target && !gBrowser.canGoBack) {
+                  stopEvent(e);
+                  contextMenu.hidePopup();
+                  closeTab();
+              }
+          }, true); 
+      }
+
+      function attachUncloseLogic(btn) {
+          if (!btn) return;
+          let pressTimer;
+          let isLongPress = false;
+
+          function handlePress(e) {
+              if (e.button !== 0 || gBrowser.canGoForward) return;
+              stopEvent(e);
+              activeUncloseBtn = btn;
+              isLongPress = false;
+
+              btn.dispatchEvent(new MouseEvent("mouseout", { bubbles: false, cancelable: true }));
+
+              pressTimer = setTimeout(() => {
+                  isLongPress = true;
+                  getOrCreateUndoMenu().openPopup(btn, "after_start", 0, 0, false, false);
+              }, 250);
+          }
+
+          function handleRelease(e) {
+              if (e.button !== 0 || gBrowser.canGoForward) return;
+              clearTimeout(pressTimer);
+              stopEvent(e);
+
+              if (!isLongPress) {
+                  if (btn.id === "context-forward" && contextMenu) contextMenu.hidePopup();
+                  undoCloseTabAction();
+                  activeUncloseBtn = null;
+              }
+          }
+
+          btn.addEventListener("pointerdown", handlePress, true);
+          btn.addEventListener("mousedown", handlePress, true);
+
+          btn.addEventListener("pointerup", handleRelease, true);
+          btn.addEventListener("mouseup", handleRelease, true);
+
+          btn.addEventListener("pointercancel", () => clearTimeout(pressTimer));
+          btn.addEventListener("mouseleave", () => {
+              if (!isLongPress) clearTimeout(pressTimer);
+          });
+
+          btn.addEventListener("contextmenu", (e) => {
+              if (!gBrowser.canGoForward) {
+                  stopEvent(e);
+                  activeUncloseBtn = btn;
+                  getOrCreateUndoMenu().openPopup(btn, "after_start", 0, 0, false, false);
+              }
+          }, true);
+
+          ["click", "command"].forEach(type => {
+              btn.addEventListener(type, (e) => {
+                  if (!gBrowser.canGoForward) stopEvent(e);
+              }, true);
+          });
+      }
+
+      attachUncloseLogic(fwdBtn);
+      attachUncloseLogic(contextFwd);
+
+      function forceEnable(element, checkFn) {
+          if (!element) return;
+          new MutationObserver((mutations) => {
+              for (let m of mutations) {
+                  if (m.attributeName === "disabled" && element.hasAttribute("disabled") && checkFn()) {
+                      updateUIState();
                   }
               }
-          } catch(err) {}
+          }).observe(element, { attributes: true, attributeFilter: ["disabled"] });
       }
-      
-      if (isBackKey && noBack) { stopEvent(e); closeTab(); }
-      if (isFwdKey && noFwd) { stopEvent(e); undoCloseTab(); }
-  }, true);
 
-  let style = document.createElement("style");
-  style.id = "uc-nav-plus-style";
-  style.textContent = `
-      #back-button[back-to-close="true"] > .toolbarbutton-icon {
-          list-style-image: url("chrome://userchromejs/content/icons/dashedback.svg") !important;
+      forceEnable(backCmd, () => !gBrowser.canGoBack);
+      forceEnable(contextBack, () => !gBrowser.canGoBack);
+      forceEnable(fwdCmd, () => !gBrowser.canGoForward);
+      forceEnable(contextFwd, () => !gBrowser.canGoForward);
+
+      gBrowser.addTabsProgressListener({
+          onLocationChange: (aBrowser) => { if (aBrowser === gBrowser.selectedBrowser) updateUIState(); },
+          onStateChange: (aBrowser) => { if (aBrowser === gBrowser.selectedBrowser) updateUIState(); }
+      });
+      
+      window.addEventListener("TabSelect", updateUIState);
+      window.addEventListener("SSTabRestored", updateUIState);
+
+      if (contextMenu) {
+          contextMenu.addEventListener("popupshowing", () => requestAnimationFrame(updateUIState));
       }
-      #forward-button[forward-to-unclose="true"] > .toolbarbutton-icon {
-          list-style-image: url("chrome://userchromejs/content/icons/dashedforward.svg") !important;
+
+      updateUIState();
+
+      window.addEventListener("mouseup", function(e) {
+          if (e.button === 3 && !gBrowser.canGoBack) { stopEvent(e); closeTab(); }
+          if (e.button === 4 && !gBrowser.canGoForward) { stopEvent(e); undoCloseTabAction(); }
+      }, true);
+
+      window.addEventListener("keydown", function(e) {
+          let noBack = !gBrowser.canGoBack;
+          let noFwd = !gBrowser.canGoForward;
+          if (!noBack && !noFwd) return;
+
+          let isBackKey = false, isFwdKey = false;
+          
+          if (e.key === "Backspace") {
+              try {
+                  if (Services.prefs.getIntPref("browser.backspace_action", 2) === 0) {
+                      let tag = e.originalTarget.tagName;
+                      if (tag !== "INPUT" && tag !== "TEXTAREA" && !e.originalTarget.isContentEditable) {
+                          if (e.shiftKey) isFwdKey = true; else isBackKey = true;
+                      }
+                  }
+              } catch(err) {}
+          }
+          
+          if (isBackKey && noBack) { stopEvent(e); closeTab(); }
+          if (isFwdKey && noFwd) { stopEvent(e); undoCloseTabAction(); }
+      }, true);
+
+      if (!document.getElementById("uc-nav-plus-style")) {
+          let style = document.createElement("style");
+          style.id = "uc-nav-plus-style";
+          style.textContent = `
+              #back-button[back-to-close="true"] {
+                  list-style-image: url("chrome://userchromejs/content/icons/dashedback.svg") !important;
+              }
+              #forward-button[forward-to-unclose="true"] {
+                  list-style-image: url("chrome://userchromejs/content/icons/dashedforward.svg") !important;
+              }
+          `;
+          document.documentElement.appendChild(style);
       }
-  `;
-  document.head.appendChild(style);
+  }
+
+  if (gBrowserInit.delayedStartupFinished) init();
+  else Services.obs.addObserver(function obs(s, t) {
+      if (t == "browser-delayed-startup-finished" && s == window) {
+          Services.obs.removeObserver(obs, t); 
+          init(); 
+      }
+  }, "browser-delayed-startup-finished");
 })();
